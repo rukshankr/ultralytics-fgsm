@@ -382,6 +382,9 @@ class BaseTrainer:
                 # Forward
                 with autocast(self.amp):
                     batch = self.preprocess_batch(batch)
+                    # @Rukshan Karannagoda
+                    # 1. Computing the Gradient
+                    batch['img'].requires_grad = True
                     loss, self.loss_items = self.model(batch)
                     self.loss = loss.sum()
                     if RANK != -1:
@@ -392,6 +395,13 @@ class BaseTrainer:
 
                 # Backward
                 self.scaler.scale(self.loss).backward()
+
+                # @Rukshan Karannagoda
+                # Fast Gradient Sign Method
+                perturbation = 0.02 * torch.sign(batch['img'].grad)
+                self.adversarial_images = batch['img'] + perturbation
+                # Get the bboxes out as well
+                self.out_boxes = batch['bboxes']
 
                 # Optimize - https://pytorch.org/docs/master/notes/amp_examples.html
                 if ni - last_opt_step >= self.accumulate:
