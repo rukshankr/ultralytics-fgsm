@@ -1,5 +1,5 @@
-# YOLO11-FGSM (Fast Gradient Sign Method)
-To run data annotation with FGSM, run *fgsm_demo.py* with the path variables changed.
+# YOLO-FGSM (Fast Gradient Sign Method)
+To run data annotation with FGSM (Goodfellow et al.,2014), run *fgsm_demo.py* with the path variables changed.
 
         python fgsm_demo.py 
 
