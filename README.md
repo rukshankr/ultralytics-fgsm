@@ -1,3 +1,8 @@
+# YOLO11-FGSM (Fast Gradient Sign Method)
+To run data annotation with FGSM, run *fgsm_demo.py* with the path variables changed.
+
+        python fgsm_demo.py 
+
 <div align="center">
   <p>
     <a href="https://www.ultralytics.com/blog/ultralytics-yolo11-has-arrived-redefine-whats-possible-in-ai" target="_blank">
