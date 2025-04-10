@@ -41,6 +41,8 @@ from ultralytics.utils.autobatch import check_train_batch_size
 from ultralytics.utils.checks import check_amp, check_file, check_imgsz, check_model_file_from_stem, print_args
 from ultralytics.utils.dist import ddp_cleanup, generate_ddp_command
 from ultralytics.utils.files import get_latest_run
+from ultralytics.utils.advstyle import advstyle_style_encode, advstyle_apply, advstyle_generate_adversarial_style, \
+    advstyle_forward
 from ultralytics.utils.torch_utils import (
     TORCH_2_4,
     EarlyStopping,
@@ -382,11 +384,41 @@ class BaseTrainer:
                 # Forward
                 with autocast(self.amp):
                     batch = self.preprocess_batch(batch)
-                    # @Rukshan Karannagoda
-                    # 1. Computing the Gradient
-                    batch['img'].requires_grad = True
+
+                    # if self.args.advstyle:
+                    #     # Apply AdvStyle augmentation
+                    #     images = batch['img']
+                    #     images.requires_grad = True
+                    #
+                    #     x_norm, mu, std = advstyle_style_encode(images)
+                    #     dummy_labels = torch.randint(0, self.model.model.nc, (images.shape[0],),
+                    #                                  device=images.device)  # random labels for gradient
+                    #
+                    #     mu_adv, std_adv = advstyle_generate_adversarial_style(mu, std, self.model.model, x_norm, dummy_labels)
+                    #     adv_images = advstyle_apply(x_norm, mu_adv, std_adv)
+                    #     batch['img'] = adv_images.detach()
+
+                    if self.args.fgsm:
+                        # 1. Computing the Gradient
+                        batch['img'].requires_grad = True
                     loss, self.loss_items = self.model(batch)
                     self.loss = loss.sum()
+
+                    if self.args.advstyle:
+                        # Generate AdvStyle image
+                        adv_imgs = advstyle_forward(self.model, batch, adv_lr=1e-1)
+
+                        # Create combined batch
+                        adv_batch = batch.copy()
+                        adv_batch["img"] = torch.cat([batch["img"], adv_imgs], dim=0)
+                        adv_batch["cls"] = torch.cat([batch["cls"], batch["cls"]], dim=0)
+                        adv_batch["bboxes"] = torch.cat([batch["bboxes"], batch["bboxes"]], dim=0)
+                        # add other fields as needed
+
+                        # Train with both clean + adversarial
+                        adv_loss, _ = self.model(adv_batch)
+                        self.loss += adv_loss.sum()
+
                     if RANK != -1:
                         self.loss *= world_size
                     self.tloss = (
@@ -396,12 +428,12 @@ class BaseTrainer:
                 # Backward
                 self.scaler.scale(self.loss).backward()
 
-                # @Rukshan Karannagoda
                 # Fast Gradient Sign Method
-                perturbation = 0.02 * torch.sign(batch['img'].grad)
-                self.adversarial_images = batch['img'] + perturbation
-                # Get the bboxes out as well
-                self.out_boxes = batch['bboxes']
+                if self.args.fgsm:
+                    perturbation = 0.02 * torch.sign(batch['img'].grad)
+                    self.adversarial_images = batch['img'] + perturbation
+                    # Get the bboxes out as well
+                    self.out_boxes = batch['bboxes']
 
                 # Optimize - https://pytorch.org/docs/master/notes/amp_examples.html
                 if ni - last_opt_step >= self.accumulate:
