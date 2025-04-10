@@ -1,4 +1,13 @@
-# YOLO-FGSM (Fast Gradient Sign Method)
+# YOLO11-DADG (YOLO for Domain Generalization and Adaptation Testing)
+This repository was created with the intention of adapting and implementing Domain Generalization and Adaptation techniques for YOLO models, mainly via Augmentation.
+
+The below methods are availble:
+
+    1.YOLO-FGSM (Fast Gradient Sign Method)
+    2.YOLO-AdvStyle
+    3.YOLO-MixStyle
+
+## YOLO-FGSM (Fast Gradient Sign Method)
 To run data annotation with FGSM (Goodfellow et al.,2014), run *fgsm_demo.py* with the path variables changed.
 
         python fgsm_demo.py 
