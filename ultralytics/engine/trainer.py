@@ -414,6 +414,10 @@ class BaseTrainer:
                         adv_batch["cls"] = torch.cat([batch["cls"], batch["cls"]], dim=0)
                         adv_batch["bboxes"] = torch.cat([batch["bboxes"], batch["bboxes"]], dim=0)
                         # add other fields as needed
+                        adv_batch['batch_idx'] = torch.cat([batch['batch_idx'], batch['batch_idx']], dim=0)
+                        adv_batch['im_file'] = batch['im_file'] + batch['im_file']
+                        adv_batch['ori_shape'] = batch['ori_shape'] + batch['ori_shape']
+                        adv_batch['resized_shape'] = batch['resized_shape'] + batch['resized_shape']
 
                         # Train with both clean + adversarial
                         adv_loss, _ = self.model(adv_batch)
