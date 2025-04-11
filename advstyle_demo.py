@@ -97,7 +97,7 @@ if __name__ == "__main__":
                           mosaic=0.0,
                           rect=True,
                           advstyle=True,
-                          batch=2)
+                          batch=1)
 
     for b, batch in enumerate(photos):
         batch_boxes = bboxes[b]

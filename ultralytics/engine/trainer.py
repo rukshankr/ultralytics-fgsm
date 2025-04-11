@@ -419,6 +419,9 @@ class BaseTrainer:
                         adv_batch['ori_shape'] = batch['ori_shape'] + batch['ori_shape']
                         adv_batch['resized_shape'] = batch['resized_shape'] + batch['resized_shape']
 
+                        self.adversarial_images = batch['img']
+                        self.out_boxes = batch['bboxes']
+
                         # Train with both clean + adversarial
                         adv_loss, _ = self.model(adv_batch)
                         self.loss += adv_loss.sum()
